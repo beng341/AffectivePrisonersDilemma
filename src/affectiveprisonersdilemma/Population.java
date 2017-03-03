@@ -60,6 +60,7 @@ public class Population extends SimState {
      * Payoff matrix for PD game.
      * R S
      * T P
+     * So cooperate = 0, defect = 1.
      */
     public int[][] payoffs = 
     {
@@ -121,12 +122,13 @@ public class Population extends SimState {
         p.setStoppable(schedule.scheduleRepeating(p));
         grid.addObjectToLocation(p, p.getLocation());
         
-        
         if( gui != null ) {
             if(p.getStrategy() == 0 ) {
-                gui.gridPortrayal.setPortrayalForObject(p, new RectanglePortrayal2D(Color.blue));
+//                gui.gridPortrayal.setPortrayalForObject(p, new RectanglePortrayal2D(Color.blue));
+                gui.gridPortrayal.setPortrayalForObject(p, new RectanglePortrayal2D(p.getEPA().colorForEPA()));
             } else {
-                gui.gridPortrayal.setPortrayalForObject(p, new RectanglePortrayal2D(Color.red));
+//                gui.gridPortrayal.setPortrayalForObject(p, new RectanglePortrayal2D(Color.red));
+                gui.gridPortrayal.setPortrayalForObject(p, new RectanglePortrayal2D(p.getEPA().colorForEPA()));
             }
         }
     }
