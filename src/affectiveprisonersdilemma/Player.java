@@ -15,13 +15,9 @@ import sim.util.Int2D;
  * @author Ben Armstrong
  */
 public class Player implements Steppable{
-
-    /**
-     * 0 for cooperate, 1 for defect
-     */
-    private int strategy;
     
     private EPA epa;
+    public final int typeNumber;
     
     // agent dies at 0 energy, reproduces at 100 energy
     private double energy = 50;
@@ -29,6 +25,16 @@ public class Player implements Steppable{
     private Int2D location;
     
     private long lastActionTime = 0;
+    
+    // 0 for defect, 1 for cooperate, 2 for moving
+    private int lastAction = -1;
+    public int getLastAction() { return lastAction; }
+    
+    private double lastPayoff = 0;
+    public double getLastPayoff() { return lastPayoff; }
+    
+    private Player lastPartner = null;
+    public Player getLastPartner() { return lastPartner; }
     
     private final Population pop;
     
@@ -40,30 +46,20 @@ public class Player implements Steppable{
     private static final EPA collab = new EPA(1.44, 1.11, 0.61);
     private static final EPA abandon = new EPA(-2.28, -0.48, -0.84);
     
-    public Player(Population state) {
-        this.pop = state;
-        strategy = state.random.nextInt(2);
-        this.energy = pop.initialEnergy;
-        int y =  state.random.nextInt(state.grid.getWidth());
-        int x =  state.random.nextInt(state.grid.getHeight());
-        epa = new EPA(state.random);
-        
-        this.location = new Int2D(x, y);
-    }
+//    public Player(Population state) {
+//        this.pop = state;
+//        this.energy = pop.initialEnergy;
+//        int y =  state.random.nextInt(state.grid.getWidth());
+//        int x =  state.random.nextInt(state.grid.getHeight());
+//        epa = new EPA(state.random);
+//        
+//        this.location = new Int2D(x, y);
+//    }
     
-    public Player(Population state, int strategy) {
-        this.pop = state;
-        this.strategy = strategy;
-        this.energy = pop.initialEnergy;
-        int y =  state.random.nextInt(state.grid.getWidth());
-        int x =  state.random.nextInt(state.grid.getHeight());
-        epa = new EPA(state.random);
-        
-        this.location = new Int2D(x, y);
-    }
-    public Player(Population state, EPA epa) {
+    public Player(Population state, EPA epa, int typeNumber) {
         this.pop = state;
         this.epa = epa;
+        this.typeNumber = typeNumber;
         this.energy = pop.initialEnergy;
         this.location = location;
     }
@@ -71,14 +67,15 @@ public class Player implements Steppable{
     @Override
     public void step(SimState state) {
         
-        
         // If we've not already played this round, find a partner and play.
         
         if( lastActionTime < pop.schedule.getSteps() ) {
             
             neighbours.clear();
             neighbours.addAll(pop.grid.getMooreNeighbors(location.x, location.y, 1, Grid2D.BOUNDED, false));
+            this.lastAction = -1;
 
+            // remove from consideration any neighbours that have already played
             this.neighbours.removeIf(
                     p -> p.getLastActionTime() >= pop.schedule.getSteps());
 
@@ -91,7 +88,12 @@ public class Player implements Steppable{
                 if( newLocation != null ) {
                     pop.grid.moveObject(this, location, newLocation);
                     location = newLocation;
+                    this.lastAction = 2;    // only recored movement if it actually happened
+                } else {
+                    this.lastAction = -1;
                 }
+                this.lastPayoff = 0;
+                this.lastPartner = null;
                 updateLastActionTime();
         //            System.out.println(this + " -> Moving");
 
@@ -114,6 +116,9 @@ public class Player implements Steppable{
         // Try (not) to die
         attemptDeath();
         
+        
+//        System.out.println(state.schedule.getSteps() + " - Payoff = " + lastPayoff + "l type = " + typeNumber);
+        
     }
     
     /**
@@ -121,10 +126,9 @@ public class Player implements Steppable{
      * such as tracking time of last action.
      * TODO: Consider updating this so it is only called once, depending on how
      * much work is being repeated after I add affective bits here.
-     * @param parter
+     * @param partner
      */
     private void interactWith(Player partner) {
-        this.energy += pop.payoffs[strategy][partner.getStrategy()];
         int strategy = 0;
         if( EPA.getDeflection(this.epa, abandon, partner.getEPA()) > 
                 EPA.getDeflection(this.epa, collab, partner.getEPA())) {
@@ -135,7 +139,17 @@ public class Player implements Steppable{
                 EPA.getDeflection(partner.getEPA(), collab, this.epa)) {
             partnerStrategy = 1;
         }
-        this.energy += pop.payoffs[strategy][partnerStrategy];
+        
+//        System.out.println("My deflection for abandon is: " + EPA.getDeflection(this.epa, abandon, partner.getEPA()));
+//        System.out.println("My deflection for collaborate is: " + EPA.getDeflection(this.epa, collab, partner.getEPA()));
+//        System.out.println("Partner's deflection for abandon is: " + EPA.getDeflection(partner.getEPA(), abandon, partner.getEPA()));
+//        System.out.println("Partner's deflection for collaborate is: " + EPA.getDeflection(partner.getEPA(), collab, partner.getEPA()));
+//        System.out.println("----------------------------------------------\n");
+        
+        this.lastAction = strategy;
+        this.lastPartner = partner;
+        this.lastPayoff = pop.payoffs[strategy][partnerStrategy];
+        this.energy += lastPayoff;
         if( this.energy > pop.maxEnergy ) this.energy = pop.maxEnergy;
         updateLastActionTime();
     }
@@ -180,11 +194,9 @@ public class Player implements Steppable{
             if( childLocation == null )
                 return;
             
-            Player child = new Player(pop);
+            Player child = new Player(pop, this.epa, typeNumber);
             child.location = childLocation;
             child.energy = this.energy/2;
-            child.strategy = this.strategy;
-            child.epa = this.epa;
             this.energy /= 2;
             
             pop.addPlayer(child);
@@ -195,10 +207,6 @@ public class Player implements Steppable{
         if( energy < pop.deathThreshold ) {
             pop.removePlayer(this);
         }
-    }
-
-    public int getStrategy() {
-        return strategy;
     }
 
     public double getEnergy() {

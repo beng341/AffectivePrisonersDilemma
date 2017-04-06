@@ -59,17 +59,7 @@ public class PopulationWithUI extends GUIState {
         
         //set player color, if strategy is out of bounds add new random colours.
         for(Player p: pop.getPlayers()){
-            if( p.getStrategy() == 0 ) {
-//                gridPortrayal.setPortrayalForObject(p, new RectanglePortrayal2D(Color.blue));
-                gridPortrayal.setPortrayalForObject(p, new RectanglePortrayal2D(p.getEPA().colorForEPA()));
-//                gridPortrayal.setPortrayalForObject(p, new RectanglePortrayal2D(
-//                new Color(255, 128, 0)));
-                
-            } else if ( p.getStrategy() == 1 ) {
-                gridPortrayal.setPortrayalForObject(p, new RectanglePortrayal2D(p.getEPA().colorForEPA()));
-//                gridPortrayal.setPortrayalForObject(p, new RectanglePortrayal2D(Color.red));
-            }
-            
+            addPlayer(p);
         }
         
         //fieldPortrayal.setField(pop.field);
@@ -79,6 +69,10 @@ public class PopulationWithUI extends GUIState {
         display.setBackdrop(Color.WHITE);
         
         display.repaint();
+    }
+    
+    public void addPlayer(Player p) {
+        gridPortrayal.setPortrayalForObject(p, new RectanglePortrayal2D(p.getEPA().colorForEPA()));
     }
     
     @Override

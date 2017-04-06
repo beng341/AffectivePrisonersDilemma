@@ -2,6 +2,7 @@ package affectiveprisonersdilemma;
 
 import ec.util.MersenneTwisterFast;
 import java.awt.Color;
+import java.util.HashMap;
 
 /**
  *
@@ -95,8 +96,9 @@ public class EPA {
         return actor;
     }
     
-    
-    
+    // remember what we've calculated before so we don't do it again. BAD IDEA!
+//    private static HashMap<double[], Double> deflections = new HashMap<>();
+    private static double[] fundamentals = new double[9];
     /**
      * Uses USA male coefficients (Indiana 2002?) to get the deflection based on
      * the given actor, behaviour, and object.
@@ -108,7 +110,6 @@ public class EPA {
     public static double getDeflection(EPA actor, EPA behaviour, EPA object) {
         
         // naive but it works so shut up
-        double[] fundamentals = new double[9];
         for(int i = 0; i < 3; ++i) {
             fundamentals[i] = actor.epa[i];
         }
@@ -118,6 +119,10 @@ public class EPA {
         for(int i = 0; i < 3; ++i) {
             fundamentals[i+6] = object.epa[i];
         }
+        
+//        if( deflections.containsKey(fundamentals) ) {
+//            return deflections.get(fundamentals);
+//        }
         
         // some intermediate values, combinations of certain fundamentals
         double[] t = new double[20];
@@ -151,6 +156,7 @@ public class EPA {
             deflection += (fundamentals[i]-tau[i])*(fundamentals[i]-tau[i]);
         }
         
+//        deflections.put(fundamentals, deflection);
         return deflection;
     }
     
@@ -161,7 +167,7 @@ public class EPA {
      * @return 
      */
     public static double randomValue(MersenneTwisterFast random) {
-        return (random.nextDouble()-0.5)*8.6;
+        return Math.round( (random.nextDouble()-0.5)*8.6 *100.0 ) / 100.0;
     }
     
     public Color colorForEPA() {
@@ -169,6 +175,6 @@ public class EPA {
     }
     
     public String toString() {
-        return "("+epa[0]+", "+epa[1]+", "+epa[2]+")";
+        return epa[0]+" "+epa[1]+" "+epa[2];
     }
 }
