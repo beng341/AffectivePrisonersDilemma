@@ -73,7 +73,7 @@ public class Population extends SimState {
     public int getNumOfEachType() { return numOfEachType; }
     public void setNumOfEachType(int num) { numOfEachType = num; }
     
-    int numTypes = 3;
+    int numTypes = 9;
     public int getNumTypes() { return numTypes; }
     public void setNumTypes(int num) { numTypes = num; }
     
@@ -178,8 +178,20 @@ public class Population extends SimState {
             double nextDouble = epaRandom.nextDouble();
         }
         
-        for (int i = 0; i < numTypes; ++i ) {
-            EPA type = new EPA(epaRandom);
+//        for (int i = 0; i < numTypes; ++i ) {
+//            EPA type = new EPA(epaRandom);
+
+        EPA[] epas = {new EPA(0.45, -2.13, -4.03), new EPA(-3.22, 2.93, 2.91),
+            new EPA(-2.82, 3.26, 3.27), new EPA(-2.3, 3.98, -2.74),
+            new EPA(2.72, 3.50, 0.36), new EPA(4.08, 3.00, 2.39),
+            new EPA(0.32, 3.99, -3.82), new EPA(0.52, 2.99, 0.19),
+            new EPA(3.12, 3.57, -2.32) };
+        
+        for (int i = 0; i < 9; ++i ) {
+//            EPA type = new EPA(epaRandom);
+
+            EPA type = epas[i];
+
             playerTypes[i] = type;
             for( int j = 0; j < numOfEachType; ++j ) {
                 Player p = new Player(this, type, i);
@@ -229,8 +241,6 @@ public class Population extends SimState {
         }
             
         final long epaSeed = tmpSeed;
-        
-        
         
         doLoop(new MakesSimState()
             {
